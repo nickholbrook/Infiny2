@@ -1,0 +1,98 @@
+{
+    "AWSTemplateFormatVersion": "2010-09-09",
+      "Parameters": {
+        "EnvironmentSize": { 
+
+            "Type": "String", 
+
+            "Default": "SMALL", 
+
+            "AllowedValues": [ 
+
+            "SMALL", 
+
+            "MEDIUM", 
+
+            "LARGE" 
+
+            ], 
+
+            "Description": "Select Environment Size (S,M,L)" 
+       }
+    },
+     "Mappings":{
+        "InstanceSize": { 
+
+            "SMALL": { 
+
+            "EC2": "t2.micro", 
+
+            "DB": "db.t2.micro" 
+
+            }, 
+
+            "MEDIUM": { 
+
+            "EC2": "t2.small", 
+
+            "DB": "db.t2.small" 
+
+            }, 
+
+            "LARGE": { 
+
+            "EC2": "t2.medium", 
+
+            "DB": "db.t2.medium" 
+
+            } 
+
+        } 
+    },
+    "Resources": { 
+
+        "EC2": { 
+
+            "Type": "AWS::EC2::Instance", 
+
+            "Properties": { 
+
+            "ImageId": "ami-d67c6ab2",
+
+            "SecurityGroupIds" : ["sg-db7a06b2"],
+            
+            "KeyName": "nick-keypair",
+
+            "InstanceType": {"Fn::FindInMap" : ["InstanceSize", {"Ref" : "EnvironmentSize"}, "EC2"]},
+
+            "UserData" : {"Fn::Base64" : {"Fn::Join" : ["", [ 
+                "#!/bin/bash","\n",
+                "apt-get update -y","\n",
+                "apt-get install apache2 -y","\n",
+                "update-rc.d apache2 enable","\n", 
+                "apt-get install python-pip -y","\n",
+                "apt-get install git -y","\n",
+                "pip install Flask","\n",
+                "apt-get install ansible -y","\n",
+                "git clone https://github.com/nickholbrook/ToInfinyAndBeyond-server.git /var/www/flask/","\n",
+                "cd /var/www/flask/","\n",
+                "export FLASK_APP=hello.py","\n",
+                "/usr/local/bin/flask run --host 0.0.0.0" ,"\n"]
+                ]
+               } 
+
+            }
+         }
+        }
+     },
+    "Outputs": {
+    "PublicIp" : {
+      "Value" : { "Fn::GetAtt" : [ "EC2", "PublicIp" ]},
+      "Description" : "Server's PublicIp Address"
+    }
+   }
+}
+    
+
+
+ 
